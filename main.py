@@ -37,7 +37,7 @@ lines_stations = {
           "Пятницкое шоссе"),
     "4": ("Александровский сад", "Арбатская", "Смоленская", "Киевская", "Студенческая", "Кутузовская", "Фили",
           "Багратионовская", "Филёвский парк", "Пионерская", "Кунцевская"),
-    "4A": ("Киевская", "Выставочная", "Международная"),
+    "4A": ("Александровский сад", "Арбатская", "Смоленская","Киевская", "Выставочная", "Международная"),
     "5": ("Курская", "Комсомольская", "Проспект Мира", "Новослободская", "Белорусская", "Краснопресненская", "Киевская",
           "Парк культуры", "Октябрьская", "Добрынинская", "Павелецкая", "Таганская"),
     "6": (
@@ -123,8 +123,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-CHOOSING_DAY, CHOOSING_STATIONS_START, CHOOSING_STATIONS_MIDDLE, CHOOSING_LINE, CHOOSING_TIME, CONFIRMING, DELETING, DELETING_CONFIRMED, STARTINGSEARCH, SHOWING_OFF, SELECTINGOP1, SELECTINGOP2, SELECTINGOP3, SELECTINGOP4, DELETING_DAY, SETTINGS_MENU, LEVEL_SELECTING, DELETING_PREF = range(
-    18)
+CHOOSING_DAY, CHOOSING_STATIONS_START, CHOOSING_STATIONS_MIDDLE, CHOOSING_LINE, CHOOSING_TIME, CONFIRMING, DELETING, DELETING_CONFIRMED, STARTINGSEARCH, SHOWING_OFF, SELECTINGOP1, SELECTINGOP2, SELECTINGOP3, SELECTINGOP4, DELETING_DAY, SETTINGS_MENU, LEVEL_SELECTING, DELETING_PREF, USER_LEVEL_SELECT, USER_OP_SELECT = range(
+    20)
 # клавиатура выбора пары
 reply_keyboard_time = [
     ["Первая (9:30)", "Вторая (11:10)"],
@@ -167,15 +167,23 @@ def choosing_day(update: Update, context: CallbackContext) -> int:
 
     return CHOOSING_DAY
 
+
 def settings_main(update: Update, context: CallbackContext) -> int:
+    """Меню настроек предпочтений"""
     update.message.reply_text(
         f'Тут ты можешь настроить, каких людей мы будем тебе предлагать\n Ты можешь выбрать курс и образовательную программу. Выбрать можно несколько пунктов.\nЕсли ничего не выбрано, мы показываем всех людей, подходящих по маршруту',
-        reply_markup=ReplyKeyboardMarkup([["В главное меню", "Предпочитаемые курсы", "Предпочитаемые ОП", "Удалить предпочтения"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(
+            [["В главное меню", "Предпочитаемые курсы", "Предпочитаемые ОП", "Удалить предпочтения"]],
+            one_time_keyboard=True)
     )
 
     return SETTINGS_MENU
 
+def user_level_select(update: Update, context: CallbackContext) -> int:
+    """Меню выбора курса пользователя"""
 
+def user_op_select(update: Update, context: CallbackContext) -> int:
+    """Меню выбора ОП пользователя"""
 
 def choosing_stations_start(update: Update, context: CallbackContext) -> int:
     """Узнали день и спрашиваем первую станцию"""
@@ -275,6 +283,7 @@ def choosing_line(update: Update, context: CallbackContext) -> int:
 
 
 def choosing_time(update: Update, context: CallbackContext) -> int:
+    """Узнали весь маршрут и узнаем номер пары"""
     now_day = context.user_data['day']
     update.message.reply_text(
         f'Выбери номер пары (кнопкой), к которой ты приезжаешь в {now_day.lower()}',
@@ -297,18 +306,21 @@ def ending_entering(update: Update, context: CallbackContext) -> int:
 
     return CONFIRMING
 
+
 def deleting_day(update: Update, context: CallbackContext) -> int:
+    """Сброс дня, после ввода"""
     now_day = context.user_data['day']
     del context.user_data[now_day]
     del context.user_data[now_day + "_time"]
     update.message.reply_text(
         f'Расписание на {now_day} удалено',
-        reply_markup = ReplyKeyboardMarkup([["OK"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["OK"]], one_time_keyboard=True)
     )
     return DELETING_DAY
 
 
 def show_everything(update: Update, context: CallbackContext) -> int:
+    """Показать все расписания"""
     update.message.reply_text(
         f'{context.user_data}',
         reply_markup=ReplyKeyboardMarkup([["Начать поиск"], ["В главное меню"]], one_time_keyboard=True)
@@ -318,6 +330,7 @@ def show_everything(update: Update, context: CallbackContext) -> int:
 
 
 def delete(update: Update, context: CallbackContext) -> int:
+    """Удаляет всё расписание (подтверждение)"""
     update.message.reply_text(
         f'Точно удалить всё расписание?',
         reply_markup=ReplyKeyboardMarkup([["ДА", "НЕТ"]], one_time_keyboard=True)
@@ -327,6 +340,7 @@ def delete(update: Update, context: CallbackContext) -> int:
 
 
 def delete_compl(update: Update, context: CallbackContext) -> int:
+    """Реальное удаление всех данных"""
     context.user_data["Понедельник"] = []
     context.user_data["Вторник"] = []
     context.user_data["Среда"] = []
@@ -360,6 +374,7 @@ def delete_compl(update: Update, context: CallbackContext) -> int:
 
 
 def start_search(update: Update, context: CallbackContext) -> int:
+    """Начинает поиск по данным"""
     update.message.reply_text(
         f'Мы начали искать тебе попутчиков!',
         reply_markup=ReplyKeyboardMarkup([["OK"]], one_time_keyboard=True)
@@ -367,7 +382,9 @@ def start_search(update: Update, context: CallbackContext) -> int:
 
     return STARTINGSEARCH
 
+
 def selectOP1(update: Update, context: CallbackContext) -> int:
+    """Выбор ОП, 1 страница"""
     keyboard_1 = [
         ["Античность", "Бизнес-информатика", "Востоковедение", "Восток-ие и африканистика"],
         ["География глобальных изменений", "Городское планирование", "Государственное управление"],
@@ -375,18 +392,60 @@ def selectOP1(update: Update, context: CallbackContext) -> int:
     ]
     update.message.reply_text(
         f'Выбери свою образовательную программу (лист 1/4)',
-        reply_markup = ReplyKeyboardMarkup(keyboard_1, one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(keyboard_1, one_time_keyboard=True)
 
     )
     return SELECTINGOP1
 
-def level_choosing(update: Update, context: CallbackContext) -> int:
+def selectOP2(update: Update, context: CallbackContext) -> int:
+    """Выбор ОП, 2 страница"""
+    keyboard_2 = [
+        ["Античность", "Бизнес-информатика", "Востоковедение", "Восток-ие и африканистика"],
+        ["География глобальных изменений", "Городское планирование", "Государственное управление"],
+        ["Завершить выбор ОП", "Предыдущая страница", "Следующая страница"]
+    ]
+    update.message.reply_text(
+        f'Выбери свою образовательную программу (лист 2/4)',
+        reply_markup=ReplyKeyboardMarkup(keyboard_2, one_time_keyboard=True)
 
+    )
+    return SELECTINGOP2
+
+def selectOP3(update: Update, context: CallbackContext) -> int:
+    """Выбор ОП, 3 страница"""
+    keyboard_3 = [
+        ["Античность", "Бизнес-информатика", "Востоковедение", "Восток-ие и африканистика"],
+        ["География глобальных изменений", "Городское планирование", "Государственное управление"],
+        ["Завершить выбор ОП", "Следующая страница"]
+    ]
+    update.message.reply_text(
+        f'Выбери свою образовательную программу (лист 3/4)',
+        reply_markup=ReplyKeyboardMarkup(keyboard_3, one_time_keyboard=True)
+
+    )
+    return SELECTINGOP3
+
+def selectOP4(update: Update, context: CallbackContext) -> int:
+    """Выбор ОП, 4 страница"""
+    keyboard_4 = [
+        ["Античность", "Бизнес-информатика", "Востоковедение", "Восток-ие и африканистика"],
+        ["География глобальных изменений", "Городское планирование", "Государственное управление"],
+        ["Завершить выбор ОП", "Следующая страница"]
+    ]
+    update.message.reply_text(
+        f'Выбери свою образовательную программу (лист 4/4)',
+        reply_markup=ReplyKeyboardMarkup(keyboard_4, one_time_keyboard=True)
+
+    )
+    return SELECTINGOP4
+
+def level_choosing(update: Update, context: CallbackContext) -> int:
     return LEVEL_SELECTING
 
-def delete_pref(update: Update, context: CallbackContext) -> int:
 
+def delete_pref(update: Update, context: CallbackContext) -> int:
     return DELETING_PREF
+
 
 # CHOOSING_DAY, CHOOSING_STATIONS_START, CHOOSING_STATIONS_MIDDLE, CHOOSING_LINE, CHOOSING_TIME, CONFIRMING, WAITING_FOR_PEOPLE, IN_OPTIONS = range(7)
 
@@ -409,7 +468,9 @@ def main() -> None:
                 MessageHandler(Filters.regex('^Показать расписание и начать поиск людей$'), show_everything),
                 MessageHandler(Filters.regex('^Настроить предпочтения$'), settings_main),
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Удалить расписание, прекратить поиск$') | Filters.regex('^Показать расписание и начать поиск людей$')), choosing_stations_start)
+                    Filters.text & ~(Filters.command | Filters.regex(
+                        '^Удалить расписание, прекратить поиск$') | Filters.regex(
+                        '^Показать расписание и начать поиск людей$')), choosing_stations_start)
             ],
             CHOOSING_STATIONS_START: [
                 MessageHandler(
@@ -422,7 +483,7 @@ def main() -> None:
                     Filters.text & ~(
                             Filters.command | Filters.regex('^Отменить ввод$') | Filters.regex('^Завершить ввод$')),
                     choosing_line,
-                ),
+                    ),
                 MessageHandler(Filters.regex('^Отменить ввод$'), choosing_day),
                 MessageHandler(Filters.regex('^Завершить ввод$'), choosing_time)
 
@@ -434,13 +495,13 @@ def main() -> None:
                 MessageHandler(
                     Filters.text & ~(Filters.command),
                     choosing_stations_middle,
-                )
+                    )
             ],
             CHOOSING_TIME: [
                 MessageHandler(
                     Filters.text & ~(Filters.command),
                     ending_entering,
-                )
+                    )
             ],
             CONFIRMING: [
                 MessageHandler(Filters.regex('^OK$'), choosing_day),
